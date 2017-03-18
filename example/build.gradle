@@ -1,0 +1,25 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'org.springframework.boot:spring-boot-gradle-plugin:1.5.2.RELEASE'
+    }
+}
+
+apply plugin: 'org.springframework.boot'
+
+
+springBoot {
+    mainClass = 'com.linecorp.armeria.example.http.thrift.ThriftOverHttpServer'
+}
+
+dependencies {
+    compile project(":thrift")
+    compile project(":tomcat")
+    compile project(":logback")
+
+    compile 'javax.inject:javax.inject:1'
+    compile 'org.springframework.boot:spring-boot-starter:1.5.2.RELEASE'
+}

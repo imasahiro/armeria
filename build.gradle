@@ -28,7 +28,7 @@ ext {
     javaProjects = subprojects.findAll { it.name != 'site' }
 
     // The list of Java projects whose artifacts are published to the Maven repository
-    publishedJavaProjects = javaProjects.findAll { it.name != 'it' && it.name != 'shaded-test' }
+    publishedJavaProjects = javaProjects.findAll { it.name != 'it' && it.name != 'shaded-test' && it.name != 'example' }
 
     // The list of backward-compatibility Java projects which have the namespace conflicts with other projects.
     backwardCompatProjects = publishedJavaProjects.findAll { it.name in [ 'thrift0.9' ] }

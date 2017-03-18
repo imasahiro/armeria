@@ -14,6 +14,7 @@ include 'zipkin'
 include 'zookeeper'
 
 // Unpublished Java projects
+include 'example'
 include 'it'
 include 'shaded-test'
 
