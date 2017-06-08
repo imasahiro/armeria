@@ -18,6 +18,7 @@ package com.linecorp.armeria.client.thrift;
 
 import static com.linecorp.armeria.common.util.Functions.voidFunction;
 
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.net.URI;
@@ -26,18 +27,13 @@ import java.util.concurrent.ExecutionException;
 
 import org.apache.thrift.async.AsyncMethodCallback;
 
-import net.bytebuddy.implementation.bind.annotation.AllArguments;
-import net.bytebuddy.implementation.bind.annotation.Origin;
-import net.bytebuddy.implementation.bind.annotation.RuntimeType;
-
 import com.linecorp.armeria.client.ClientBuilderParams;
 import com.linecorp.armeria.client.ClientFactory;
 import com.linecorp.armeria.client.ClientOptions;
 import com.linecorp.armeria.common.RpcResponse;
 import com.linecorp.armeria.common.util.CompletionActions;
 
-// Visible to generated proxies, should not be used by client code.
-public final class THttpClientInvocationHandler implements ClientBuilderParams {
+final class ProxiedTHttpClientInvocationHandler implements InvocationHandler, ClientBuilderParams {
 
     private static final Object[] NO_ARGS = new Object[0];
 
@@ -46,8 +42,8 @@ public final class THttpClientInvocationHandler implements ClientBuilderParams {
     private final String path;
     private final String fragment;
 
-    THttpClientInvocationHandler(ClientBuilderParams params,
-                                 THttpClient thriftClient, String path, String fragment) {
+    ProxiedTHttpClientInvocationHandler(ClientBuilderParams params,
+                                        THttpClient thriftClient, String path, String fragment) {
         this.params = params;
         this.thriftClient = thriftClient;
         this.path = path;
@@ -77,12 +73,32 @@ public final class THttpClientInvocationHandler implements ClientBuilderParams {
     /**
      * Processes a method invocation on a thrift client instance and returns the result.
      */
-    @RuntimeType
-    public Object invoke(@Origin Method method, @AllArguments @RuntimeType Object[] args) throws Throwable {
+    @Override
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         final Class<?> declaringClass = method.getDeclaringClass();
+        if (declaringClass == Object.class) {
+            // Handle the methods in Object
+            return invokeObjectMethod(proxy, method, args);
+        }
+
         assert declaringClass == params.clientType();
         // Handle the methods in the interface.
         return invokeClientMethod(method, args);
+    }
+
+    private Object invokeObjectMethod(Object proxy, Method method, Object[] args) {
+        final String methodName = method.getName();
+
+        switch (methodName) {
+            case "toString":
+                return params.clientType().getSimpleName() + '(' + path + ')';
+            case "hashCode":
+                return System.identityHashCode(proxy);
+            case "equals":
+                return proxy == args[0];
+            default:
+                throw new Error("unknown method: " + methodName);
+        }
     }
 
     private Object invokeClientMethod(Method method, Object[] args) throws Throwable {

@@ -87,6 +87,9 @@ javax.validation:
 junit:
   junit: { version: '4.12' }
 
+net.bytebuddy:
+  byte-buddy: { version: '1.7.0' }
+
 net.javacrumbs.json-unit:
   json-unit: { version: &JSON_UNIT_VERSION '1.24.0' }
   json-unit-fluent: { version: *JSON_UNIT_VERSION }

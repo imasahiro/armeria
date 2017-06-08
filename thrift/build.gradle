@@ -3,6 +3,8 @@ plugins {
 }
 
 managedDependencies {
+    // bytebuddy
+    compile 'net.bytebuddy:byte-buddy'
     // Thrift
     compile 'org.apache.thrift:libthrift'
 

@@ -17,11 +17,16 @@
 package com.linecorp.armeria.client.thrift;
 
 import static com.google.common.base.MoreObjects.firstNonNull;
+import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
+import static net.bytebuddy.matcher.ElementMatchers.not;
 
-import java.lang.reflect.Proxy;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Set;
+
+import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy.Default;
+import net.bytebuddy.implementation.MethodDelegation;
 
 import com.google.common.collect.ImmutableSet;
 
@@ -42,7 +47,7 @@ import com.linecorp.armeria.common.thrift.ThriftSerializationFormats;
 /**
  * A {@link DecoratingClientFactory} that creates a Thrift-over-HTTP client.
  */
-final class THttpClientFactory extends DecoratingClientFactory {
+public class THttpClientFactory extends DecoratingClientFactory {
 
     private static final Set<Scheme> SUPPORTED_SCHEMES;
 
@@ -61,7 +66,7 @@ final class THttpClientFactory extends DecoratingClientFactory {
      *
      * @throws IllegalArgumentException if the specified {@link ClientFactory} does not support HTTP
      */
-    THttpClientFactory(ClientFactory httpClientFactory) {
+    public THttpClientFactory(ClientFactory httpClientFactory) {
         super(httpClientFactory);
     }
 
@@ -93,16 +98,24 @@ final class THttpClientFactory extends DecoratingClientFactory {
                     new DefaultClientBuilderParams(this, pathlessUri(uri), THttpClient.class, options),
                     delegate, scheme.sessionProtocol(), newEndpoint(uri));
 
-            @SuppressWarnings("unchecked")
-            T client = (T) Proxy.newProxyInstance(
-                    clientType.getClassLoader(),
-                    new Class<?>[] { clientType },
-                    new THttpClientInvocationHandler(
-                            new DefaultClientBuilderParams(this, uri, clientType, options),
-                            thriftClient,
-                            firstNonNull(uri.getRawPath(), "/"),
-                            uri.getFragment()));
-            return client;
+            final THttpClientInvocationHandler handler = new THttpClientInvocationHandler(
+                    new DefaultClientBuilderParams(this, uri, clientType, options),
+                    thriftClient,
+                    firstNonNull(uri.getRawPath(), "/"),
+                    uri.getFragment());
+            try {
+                return new ByteBuddy().subclass(clientType)
+                                      .method(isDeclaredBy(clientType))
+                                      .intercept(MethodDelegation.withDefaultConfiguration()
+                                                                 .filter(not(isDeclaredBy(Object.class)))
+                                                                 .to(handler, "handler"))
+                                      .make()
+                                      .load(clientType.getClassLoader(), Default.INJECTION)
+                                      .getLoaded()
+                                      .newInstance();
+            } catch (InstantiationException | IllegalAccessException e) {
+                throw new IllegalArgumentException("Could not generate client proxy.", e);
+            }
         }
     }
 
