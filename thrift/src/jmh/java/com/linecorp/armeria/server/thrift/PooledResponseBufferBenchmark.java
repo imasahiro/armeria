@@ -18,7 +18,6 @@ package com.linecorp.armeria.server.thrift;
 
 import static com.linecorp.armeria.common.SessionProtocol.HTTP;
 
-import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
@@ -168,12 +167,12 @@ public class PooledResponseBufferBenchmark {
         server.stop().join();
     }
 
-    @Benchmark
+    //@Benchmark
     public void pooled(Blackhole bh) throws Exception {
         bh.consume(pooledClient.hello("hello"));
     }
 
-    @Benchmark
+    //@Benchmark
     public void unpooled(Blackhole bh) throws Exception {
         bh.consume(unpooledClient.hello("hello"));
     }
