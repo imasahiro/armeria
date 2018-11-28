@@ -169,8 +169,30 @@ public class ArmeriaAutoConfigurationTest {
     }
 
     @Test
-    public void testHttpServiceRegistrationBean() throws Exception {
+    public void testHttpServiceRegistrationBeanH1C() throws Exception {
         final HttpClient client = HttpClient.of(newUrl("h1c"));
+
+        final HttpResponse response = client.get("/ok");
+
+        final AggregatedHttpMessage msg = response.aggregate().get();
+        assertThat(msg.status()).isEqualTo(HttpStatus.OK);
+        assertThat(msg.content().toStringUtf8()).isEqualTo("ok");
+    }
+
+    @Test
+    public void testHttpServiceRegistrationBeanH2C() throws Exception {
+        final HttpClient client = HttpClient.of(newUrl("h2c"));
+
+        final HttpResponse response = client.get("/ok");
+
+        final AggregatedHttpMessage msg = response.aggregate().get();
+        assertThat(msg.status()).isEqualTo(HttpStatus.OK);
+        assertThat(msg.content().toStringUtf8()).isEqualTo("ok");
+    }
+
+    @Test
+    public void testHttpServiceRegistrationBeanHttp() throws Exception {
+        final HttpClient client = HttpClient.of(newUrl("http"));
 
         final HttpResponse response = client.get("/ok");
 
